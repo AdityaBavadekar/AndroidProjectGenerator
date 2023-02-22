@@ -1,0 +1,136 @@
+plugins {
+    id 'com.android.application' version '7.4.1'
+    id 'org.jetbrains.kotlin.android' version '1.7.0'
+    id 'kotlin-kapt'
+    id 'com.google.gms.google-services'
+    id 'com.google.android.gms.oss-licenses-plugin'
+    id 'androidx.navigation.safeargs.kotlin'
+}
+
+android {
+    compileSdk Versions.COMPILE_SDK
+    namespace "%PACKAGE_NAME%"
+
+    def timestamp = System.currentTimeMillis()
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
+
+    defaultConfig {
+        applicationId "%PACKAGE_NAME%"
+        minSdkVersion Versions.MIN_SDK
+        targetSdkVersion Versions.TARGET_SDK
+        versionCode Versions.VERSION_CODE
+        versionName Versions.VERSION_NAME
+        vectorDrawables.useSupportLibrary = true
+        multiDexEnabled true
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "DATE", "\"${new Date()}\""
+        buildConfigField "Long", "TIMESTAMP", "Long.parseLong(\"${timestamp}\")"
+
+    }
+
+    signingConfigs {
+        releaseConfig {
+            keyAlias = properties.getProperty("KEY_ALIAS")
+            keyPassword = properties.getProperty("KEY_PASSWORD")
+            storePassword = properties.getProperty("STORE_PASSWORD")
+            if (properties.getProperty("STORE_FILE") != null) {
+                storeFile = file(properties.getProperty("STORE_FILE"))
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            //disable minify because it crashes the app on release build, with
+            // a NullPointerException pointing to  AuthViewModel#getCountryCodeInfo() -> line 2
+            minifyEnabled false
+            // Removing unused resources requires unused code shrinking to be turned on.
+            //And so even disable shrinkResources
+            shrinkResources false
+            signingConfig signingConfigs.releaseConfig
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "BUILD_TYPE_NAME", "\"Release\""
+        }
+
+        debug {
+            buildConfigField "String", "BUILD_TYPE_NAME", "\"Debug\""
+        }
+
+    }
+
+    lintOptions {
+        // Running lint over the debug variant is enough
+        checkReleaseBuilds false
+        baseline file("lint-baseline.xml")
+    }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName = output.outputFileName.replace(".apk", "-${variant.versionName}.apk")
+            print("${output.outputFileName} [Versions code : ${variant.versionCode}, Version name : ${variant.versionName}, BuildTimestamp : ${timestamp}] " + "\n")
+        }
+    }
+
+    buildFeatures {
+        viewBinding = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+}
+
+dependencies {
+
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+
+    implementation Dependencies.ANDROIDX_CORE
+    implementation Dependencies.ANDROIDX_APPCOMPAT
+    implementation Dependencies.ACTIVITY_KTX
+    implementation Dependencies.CONSTRAINT_LAYOUT
+    implementation Dependencies.EMOJI2
+    implementation platform(Dependencies.FIREBASE_BOM)
+    implementation Dependencies.FIREBASE_APPCHECK
+    implementation Dependencies.FIREBASE_APPCHECK_PLAY
+    implementation Dependencies.FIREBASE_AUTH
+    implementation Dependencies.FIREBASE_DATABASE
+    implementation Dependencies.FIREBASE_MESSAGING
+    implementation Dependencies.FIREBASE_STORAGE
+    implementation Dependencies.FRAGMENT_KTX
+    implementation Dependencies.GLIDE
+    kapt Dependencies.GLIDE_COMPILER
+    implementation Dependencies.JSOUP
+    implementation Dependencies.KOTLIN
+    implementation Dependencies.LIBPHONENUMBER
+    implementation Dependencies.LIFECYCLE_EXT
+    implementation Dependencies.LIFECYCLE_VIEWMODEL
+    implementation Dependencies.LOTTIE
+    implementation Dependencies.MATERIAL
+    implementation Dependencies.NAVIGATION_FRAGMENT
+    implementation Dependencies.NAVIGATION_UI
+    implementation Dependencies.OSS_LICENSES
+    implementation Dependencies.PAGING
+    implementation Dependencies.PHOTOVIEW
+    implementation Dependencies.PINLOG
+    debugImplementation Dependencies.PINLOG_ACTIVITY
+    implementation Dependencies.PLAY_SERVICES_AUTH
+    implementation Dependencies.PLAY_SERVICES_SAFETY_NET
+    implementation Dependencies.PREFERENCE
+    implementation Dependencies.RECYCLER_VIEW
+    implementation Dependencies.RECYCLER_VIEW_SELECTION
+    implementation Dependencies.RETROFIT
+    implementation Dependencies.RETROFIT_CONVERTER_GSON
+    kapt Dependencies.ROOM_COMPILER
+    implementation Dependencies.ROOM_RUNTIME
+    implementation Dependencies.ROOM_KTX
+
+}
